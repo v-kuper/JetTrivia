@@ -1,10 +1,15 @@
 package com.example.jettrivia.component
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ButtonDefaults.buttonColors
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
@@ -35,7 +41,10 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.jettrivia.model.QuestionItem
@@ -115,6 +124,8 @@ fun QuestionsDisplay(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start
         ) {
+            ShowProgress(score = questionIndex, maxScore = size)
+
             // Трекер "вопрос X из Y"
             QuestionTracker(counter = questionIndex, outOf = size)
 
@@ -272,6 +283,78 @@ fun QuestionTracker(counter: Int, outOf: Int) {
             color = AppColors.mLightGray,
             fontWeight = FontWeight.Bold,
             fontSize = 27.sp
+        )
+    }
+}
+
+@Preview
+@Composable
+fun ShowProgressPreview() {
+    ShowProgress(score = 12, maxScore = 100)
+}
+
+@Composable
+fun ShowProgress(
+    score: Int,
+    maxScore: Int = 100,
+    modifier: Modifier = Modifier
+) {
+    val clampedScore = score.coerceIn(0, maxScore)
+    val targetProgress = (clampedScore.toFloat() / maxScore.toFloat())
+        .coerceIn(0f, 1f)
+
+    val animatedProgress by animateFloatAsState(
+        targetValue = targetProgress,
+        animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
+        label = "progressAnimation"
+    )
+
+    val gradient = Brush.linearGradient(
+        listOf(
+            Color(0xFFF95075),
+            Color(0xFFBE6BE5)
+        )
+    )
+
+    Box(
+        modifier = modifier
+            .padding(3.dp)
+            .fillMaxWidth()
+            .height(45.dp)
+            .border(
+                width = 4.dp,
+                brush = Brush.linearGradient(
+                    colors = listOf(AppColors.mLightPurple, AppColors.mLightPurple)
+                ),
+                shape = RoundedCornerShape(34.dp)
+            )
+            .clip(RoundedCornerShape(34.dp))
+    ) {
+        // Трек + заливка прогресса
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(Color.Transparent)
+        ) {
+            // Заливка прогресса
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth(animatedProgress)
+                    .background(brush = gradient)
+            )
+        }
+
+        // Текст поверх всего
+        Text(
+            text = "$clampedScore",
+            modifier = Modifier
+                .align(Alignment.Center)
+                .padding(horizontal = 8.dp),
+            color = AppColors.mOffWhite,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Clip
         )
     }
 }
